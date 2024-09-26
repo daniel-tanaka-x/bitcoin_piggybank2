@@ -3,43 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSBT QR Codes</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <style>
-        .qr-code {
-            margin-bottom: 20px;
-            display: inline-block;
-            margin-right: 10px;
-        }
-        .qr-wrapper {
-            text-align: center;
-            margin-top: 20px;
-        }
-    </style>
+    <title>PSBT Details and Broadcast</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
 
     <div class="container">
-        <h1>PSBT Details</h1>
+        <h1>PSBT Details and Broadcast</h1>
 
-        <!-- Display the PSBT serialized data as plain text -->
-        <h2>PSBT (Plain Text)</h2>
-        <p>{{ psbt_serialized }}</p>
+        <!-- Display PSBT Text Data -->
+        <p><strong>PSBT (Base64):</strong></p>
+        <textarea rows="8" style="width:100%; font-size:14px;" readonly>{{ psbt_serialized }}</textarea>
 
-        <!-- Display the total input amount and the transaction fee -->
-        <h2>Total Inputs and Fee</h2>
-        <p>Total Input (Satoshis): {{ total_satoshis }}</p>
-        <p>Transaction Fee (Satoshis): {{ fee }}</p>
+        <p><strong>Total Input (satoshis):</strong> {{ total_satoshis }}</p>
+        <p><strong>Transaction Fee (satoshis):</strong> {{ fee }}</p>
 
-        <!-- Display the QR codes for the PSBT data -->
-        <h2>Scan all the QR codes below to get the full PSBT</h2>
-        <div class="qr-wrapper">
-            {% for chunk in psbt_chunks %}
-                <div class="qr-code">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ chunk }}" alt="QR code part">
-                </div>
-            {% endfor %}
-        </div>
+        <!-- Loop through each PSBT chunk and display as QR code -->
+        {% for chunk in psbt_chunks %}
+            <div class="qr-code">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ chunk }}" alt="QR code part">
+            </div>
+        {% endfor %}
+
+        <p>Scan the QR codes above to get the full PSBT.</p>
+
+        <!-- Broadcast Form -->
+        <h2>Broadcast Signed PSBT</h2>
+        <form action="/broadcast_psbt" method="POST">
+            <label for="signed_psbt">Signed PSBT (Base64 Encoded):</label><br>
+            <input type="text" id="signed_psbt" name="signed_psbt" required><br><br>
+            <input type="submit" value="Broadcast PSBT">
+        </form>
     </div>
 
 </body>

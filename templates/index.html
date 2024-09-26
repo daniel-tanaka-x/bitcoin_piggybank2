@@ -9,7 +9,7 @@
 <body>
 
     <div class="container">
-        <h1>Bitcoin Piggy Bank</h1>
+        <h1>Bitcoin Piggybank</h1>
 
         <!-- Display error message if there is one -->
         {% if error %}
@@ -27,14 +27,6 @@
             <label for="recipient_address">Recipient Address:</label><br>
             <input type="text" id="recipient_address" name="recipient_address" required><br><br>
             <input type="submit" value="Generate PSBT">
-        </form>
-
-        <!-- Broadcast Signed PSBT Form -->
-        <h2>Broadcast Signed PSBT</h2>
-        <form action="/broadcast_psbt" method="POST">
-            <label for="signed_psbt">Signed PSBT (Base64 Encoded):</label><br>
-            <input type="text" id="signed_psbt" name="signed_psbt" required><br><br>
-            <input type="submit" value="Broadcast PSBT">
         </form>
 
         <!-- Wi-Fi Setup Form -->
