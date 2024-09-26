@@ -50,6 +50,48 @@
             <input type="submit" value="Set zpub">
         </form>
 
+        <!-- API Keys Form -->
+        <h2>Update API Keys (Individually)</h2>
+        <form action="/update_api_keys" method="POST">
+            <h3>Bybit</h3>
+            <input type="checkbox" id="update_bybit" name="update_bybit" value="true">
+            <label for="update_bybit">Update Bybit API Keys</label><br><br>
+            <label for="bybit_apiKey">API Key:</label><br>
+            <input type="text" id="bybit_apiKey" name="bybit_apiKey"><br><br>
+            <label for="bybit_secret">Secret:</label><br>
+            <input type="text" id="bybit_secret" name="bybit_secret"><br><br>
+
+            <h3>Bitget</h3>
+            <input type="checkbox" id="update_bitget" name="update_bitget" value="true">
+            <label for="update_bitget">Update Bitget API Keys</label><br><br>
+            <label for="bitget_apiKey">API Key:</label><br>
+            <input type="text" id="bitget_apiKey" name="bitget_apiKey"><br><br>
+            <label for="bitget_secret">Secret:</label><br>
+            <input type="text" id="bitget_secret" name="bitget_secret"><br><br>
+            <label for="bitget_password">Password:</label><br>
+            <input type="password" id="bitget_password" name="bitget_password"><br><br>
+
+            <h3>KuCoin</h3>
+            <input type="checkbox" id="update_kucoin" name="update_kucoin" value="true">
+            <label for="update_kucoin">Update KuCoin API Keys</label><br><br>
+            <label for="kucoin_apiKey">API Key:</label><br>
+            <input type="text" id="kucoin_apiKey" name="kucoin_apiKey"><br><br>
+            <label for="kucoin_secret">Secret:</label><br>
+            <input type="text" id="kucoin_secret" name="kucoin_secret"><br><br>
+            <label for="kucoin_password">Password:</label><br>
+            <input type="password" id="kucoin_password" name="kucoin_password"><br><br>
+
+            <h3>MEXC</h3>
+            <input type="checkbox" id="update_mexc" name="update_mexc" value="true">
+            <label for="update_mexc">Update MEXC API Keys</label><br><br>
+            <label for="mexc_apiKey">API Key:</label><br>
+            <input type="text" id="mexc_apiKey" name="mexc_apiKey"><br><br>
+            <label for="mexc_secret">Secret:</label><br>
+            <input type="text" id="mexc_secret" name="mexc_secret"><br><br>
+
+            <input type="submit" value="Update API Keys">
+        </form>
+        
     </div>
 
 </body>

@@ -8,6 +8,19 @@ from bitcointx.core.psbt import PartiallySignedTransaction
 
 app = Flask(__name__)
 
+# Load API keys file
+API_KEYS_FILE = 'api_keys.json'
+
+def load_api_keys():
+    if os.path.exists(API_KEYS_FILE):
+        with open(API_KEYS_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_api_keys(api_keys):
+    with open(API_KEYS_FILE, 'w') as f:
+        json.dump(api_keys, f, indent=4)
+
 # ======= Route to show form and collect recipient address ======= #
 @app.route('/')
 def home():
@@ -111,6 +124,55 @@ def setup_zpub():
         return jsonify({"error": f"Failed to save zpub: {str(e)}"}), 500
 
     return jsonify({"message": "zpub key set successfully!"}), 200
+
+# Route to update API keys individually
+@app.route('/update_api_keys', methods=['POST'])
+def update_api_keys():
+    api_keys = load_api_keys()
+
+    # Update Bybit keys if checkbox is selected
+    if request.form.get('update_bybit'):
+        bybit_api_key = request.form.get('bybit_apiKey')
+        bybit_secret = request.form.get('bybit_secret')
+        if bybit_api_key and bybit_secret:
+            api_keys['bybit']['apiKey'] = bybit_api_key
+            api_keys['bybit']['secret'] = bybit_secret
+
+    # Update Bitget keys if checkbox is selected
+    if request.form.get('update_bitget'):
+        bitget_api_key = request.form.get('bitget_apiKey')
+        bitget_secret = request.form.get('bitget_secret')
+        bitget_password = request.form.get('bitget_password')
+        if bitget_api_key and bitget_secret:
+            api_keys['bitget']['apiKey'] = bitget_api_key
+            api_keys['bitget']['secret'] = bitget_secret
+        if bitget_password:
+            api_keys['bitget']['password'] = bitget_password
+
+    # Update KuCoin keys if checkbox is selected
+    if request.form.get('update_kucoin'):
+        kucoin_api_key = request.form.get('kucoin_apiKey')
+        kucoin_secret = request.form.get('kucoin_secret')
+        kucoin_password = request.form.get('kucoin_password')
+        if kucoin_api_key and kucoin_secret:
+            api_keys['kucoin']['apiKey'] = kucoin_api_key
+            api_keys['kucoin']['secret'] = kucoin_secret
+        if kucoin_password:
+            api_keys['kucoin']['password'] = kucoin_password
+
+    # Update MEXC keys if checkbox is selected
+    if request.form.get('update_mexc'):
+        mexc_api_key = request.form.get('mexc_apiKey')
+        mexc_secret = request.form.get('mexc_secret')
+        if mexc_api_key and mexc_secret:
+            api_keys['mexc']['apiKey'] = mexc_api_key
+            api_keys['mexc']['secret'] = mexc_secret
+
+    try:
+        save_api_keys(api_keys)
+        return render_template('index.html', message="API keys updated successfully!")
+    except Exception as e:
+        return render_template('index.html', error=f"Failed to update API keys: {str(e)}")
 
 # Start the Flask app
 if __name__ == '__main__':

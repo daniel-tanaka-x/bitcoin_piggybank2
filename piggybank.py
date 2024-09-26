@@ -1,10 +1,10 @@
-#!/usr/bin/python
-# -*- coding:utf-8 -*-
-import sys, os, logging, platform, time, requests, json
+import sys, os, logging, platform, time, requests, json, socket
 from waveshare_epd import epd2in13_V4  # Import the Waveshare E-Ink display driver
 from PIL import Image, ImageDraw, ImageFont
 from bip_utils import Bip84, Bip84Coins, Bip44Changes
 import qrcode
+import socket
+import subprocess
 
 # Initialize paths, logging, and display driver
 picdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pic')
@@ -17,6 +17,20 @@ time.sleep(30)  # Delay before fetching data
 # ==========================
 # Helper Functions
 # ==========================
+
+def get_ip_address():
+    """Detect active IP address."""
+    try:
+        ip_address = subprocess.check_output(['hostname', '-I']).decode('utf-8').split()[0]
+    except Exception as e:
+        ip_address = "IP Not Found"
+        print(f"Failed to get IP: {str(e)}")
+    return ip_address
+
+
+# Example usage:
+print(f"Current IP: {get_ip_address()}")
+
 def load_json(file):
     if os.path.exists(file):
         with open(file, 'r') as f:
@@ -27,10 +41,26 @@ def api_get(url):
     response = requests.get(url)
     return response.json() if response.status_code == 200 else None
 
+def get_local_ip():
+    try:
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        return local_ip
+    except:
+        return "IP Not Found"
+
+def is_wifi_configured():
+    """Check if Wi-Fi is configured by looking at wpa_supplicant.conf."""
+    try:
+        with open("/etc/wpa_supplicant/wpa_supplicant.conf", "r") as wpa_file:
+            return "ssid" in wpa_file.read()
+    except:
+        return False
+
 # ==========================
 # Bitcoin Functions
 # ==========================
-def get_utxos(address): 
+def get_utxos(address):
     return api_get(f"https://blockstream.info/api/address/{address}/utxo")
 
 def get_balance(address):
@@ -55,24 +85,30 @@ def collect_utxos(addresses):
 # ==========================
 # Display Functions
 # ==========================
-def display_text(draw, font, total_satoshis):
-    draw.text((10, 10), "I'm full! Break me to take out sats", font=font, fill=0)
-    draw.text((10, 30), "Total Balance:", font=font, fill=0)
-    draw.text((10, 50), f"{total_satoshis} satoshi", font=font, fill=0)
-    draw.text((10, 80), "Please use your seed directly.", font=font, fill=0)
-    draw.text((10, 95), "I'm really proud of you. Good job!", font=font, fill=0)
-
-def display_full_status(total_satoshis):
+def display_setup_info(message):
+    """Display setup information on the E-Ink screen for Wi-Fi or zpub configuration."""
+    ip_address = get_ip_address()  # Get the correct IP address
     epd = epd2in13_V4.EPD()
     epd.init(), epd.Clear(0xFF)
-    eink_image = Image.new('1', (epd.height, epd.width), 255)
-    draw = ImageDraw.Draw(eink_image)
-    font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 12)
-    display_text(draw, font, total_satoshis)
-    epd.display(epd.getbuffer(eink_image.rotate(90, expand=True)))
+    img = Image.new('1', (epd.height, epd.width), 255)
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 11)
+
+    draw.text((10, 10), message, font=font, fill=0)
+    draw.text((10, 30), "Connect to:", font=font, fill=0)
+    draw.text((10, 50), "SSID: RaspberryPi_Hotspot", font=font, fill=0)
+    draw.text((10, 70), "Password: welcome_to_piggybank", font=font, fill=0)
+
+    # Use the correct IP address
+    draw.text((10, 90), f"Visit: http://{ip_address}:5001/", font=font, fill=0)
+
+    epd.display(epd.getbuffer(img.rotate(90, expand=True)))
     epd.sleep()
 
+
+
 def display_on_eink(index, balance, addr, utxo_count):
+    """Pattern B: Display QR code of receiving address."""
     epd = epd2in13_V4.EPD()
     epd.init(), epd.Clear(0xFF)
     img = Image.new('1', (epd.height, epd.width), 255)
@@ -92,14 +128,38 @@ def display_on_eink(index, balance, addr, utxo_count):
     epd.display(epd.getbuffer(img.rotate(90, expand=True)))
     epd.sleep()
 
+def display_full_status(total_satoshis):
+    """Pattern C: Display full status and instructions to break piggybank."""
+    epd = epd2in13_V4.EPD()
+    epd.init(), epd.Clear(0xFF)
+    eink_image = Image.new('1', (epd.height, epd.width), 255)
+    draw = ImageDraw.Draw(eink_image)
+    font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 12)
+
+    draw.text((10, 10), "I'm full! Break me to take out sats", font=font, fill=0)
+    draw.text((10, 30), "Total Balance:", font=font, fill=0)
+    draw.text((10, 50), f"{total_satoshis} satoshi", font=font, fill=0)
+    draw.text((10, 80), "Please use your seed directly.", font=font, fill=0)
+    draw.text((10, 95), "I'm really proud of you. Good job!", font=font, fill=0)
+
+    epd.display(epd.getbuffer(eink_image.rotate(90, expand=True)))
+    epd.sleep()
+
 # ==========================
 # Main Execution Loop
 # ==========================
-zpub = load_json("zpub.json").get("zpub")
-bip84_ctx = Bip84.FromExtendedKey(zpub, Bip84Coins.BITCOIN)
-addresses = [bip84_ctx.Change(Bip44Changes.CHAIN_EXT).AddressIndex(i).PublicKey().ToAddress() for i in range(21)]
+zpub = load_json("zpub.json").get("zpub") if os.path.exists("zpub.json") else None
+bip84_ctx = Bip84.FromExtendedKey(zpub, Bip84Coins.BITCOIN) if zpub else None
+addresses = [bip84_ctx.Change(Bip44Changes.CHAIN_EXT).AddressIndex(i).PublicKey().ToAddress() for i in range(21)] if zpub else []
 
 while True:
+    if not is_wifi_configured() or not zpub:
+        # Pattern A: Wi-Fi or zpub not configured, show setup info
+        display_setup_info("Wi-Fi or zpub not configured!")
+        print("Displaying hotspot or zpub setup instructions.")
+        time.sleep(30)
+        continue
+
     total_balance, found_unused, utxo_count, i = 0, False, 0, 0
 
     while not found_unused:
@@ -117,19 +177,18 @@ while True:
         if balance > 0:
             total_balance += balance
             utxos = get_utxos(addr)
-            utxo_count += len(utxos)  # Count UTXOs for each address
+            utxo_count += len(utxos)
 
         i += 1
 
-    display_on_eink(current_index, total_balance, addr, utxo_count)
-    print(f"Unused address: {addr} (Index: {current_index})")
-    print(f"Total Balance: {total_balance} sats")
-    print(f"Total UTXOs (Savings): {utxo_count}")
-
-    if utxo_count >= 21:  # Break piggybank when 21 UTXOs are saved
-        print("Used UTXOs Count reached 21. Initiating break.")
-        utxos, total_satoshis, total_utxo_count = collect_utxos(addresses)
-        display_full_status(total_satoshis)
+    if utxo_count < 21:
+        # Pattern B: Display receiving address QR code
+        display_on_eink(current_index, total_balance, addr, utxo_count)
+        print(f"Displaying receiving address QR code: {addr}")
+    else:
+        # Pattern C: Display full status and instructions
+        display_full_status(total_balance)
+        print("UTXOs reached 21. Displaying break piggybank instructions.")
         break
 
     time.sleep(30)
