@@ -4,99 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bitcoin Piggybank</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            width: 90%;
-        }
-
-        h1 {
-            color: #F7931A; /* Bitcoin Orange */
-            text-align: center;
-        }
-
-        h2 {
-            color: #555;
-            margin-bottom: 15px;
-        }
-
-        label {
-            color: #333;
-            font-weight: bold;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 20px;
-            border: 2px solid #F7931A; /* Bitcoin Orange */
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-
-        input[type="submit"] {
-            background-color: #F7931A; /* Bitcoin Orange */
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        input[type="submit"]:hover {
-            background-color: #e67e22;
-        }
-
-        p {
-            text-align: center;
-            font-size: 18px;
-        }
-
-        /* Error and success messages */
-        .error {
-            color: red;
-            font-size: 16px;
-            text-align: center;
-        }
-
-        .success {
-            color: green;
-            font-size: 16px;
-            text-align: center;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 600px) {
-            h1, h2 {
-                font-size: 24px;
-            }
-
-            input[type="submit"], input[type="text"] {
-                font-size: 14px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
 
@@ -113,12 +21,43 @@
             <p class="success">{{ message }}</p>
         {% endif %}
 
+        <!-- PSBT Form -->
         <h2>Enter Recipient Address for PSBT</h2>
         <form action="/generate_psbt" method="POST">
             <label for="recipient_address">Recipient Address:</label><br>
             <input type="text" id="recipient_address" name="recipient_address" required><br><br>
             <input type="submit" value="Generate PSBT">
         </form>
+
+        <!-- Broadcast Signed PSBT Form -->
+        <h2>Broadcast Signed PSBT</h2>
+        <form action="/broadcast_psbt" method="POST">
+            <label for="signed_psbt">Signed PSBT (Base64 Encoded):</label><br>
+            <input type="text" id="signed_psbt" name="signed_psbt" required><br><br>
+            <input type="submit" value="Broadcast PSBT">
+        </form>
+
+        <!-- Wi-Fi Setup Form -->
+        <h2>Set Up Wi-Fi</h2>
+        <form action="/setup_wifi" method="POST">
+            <label for="ssid">Wi-Fi SSID:</label><br>
+            <input type="text" id="ssid" name="ssid" required><br><br>
+
+            <label for="password">Wi-Fi Password:</label><br>
+            <input type="password" id="password" name="password" required><br><br>
+
+            <input type="submit" value="Set Wi-Fi">
+        </form>
+
+        <!-- zpub Setup Form -->
+        <h2>Set zpub Key</h2>
+        <form action="/setup_zpub" method="POST">
+            <label for="zpub">zpub Key:</label><br>
+            <input type="text" id="zpub" name="zpub" required><br><br>
+
+            <input type="submit" value="Set zpub">
+        </form>
+
     </div>
 
 </body>
