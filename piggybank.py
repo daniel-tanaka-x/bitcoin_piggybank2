@@ -41,21 +41,23 @@ def api_get(url):
     response = requests.get(url)
     return response.json() if response.status_code == 200 else None
 
-def get_local_ip():
-    try:
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        return local_ip
-    except:
-        return "IP Not Found"
-
 def is_wifi_configured():
-    """Check if Wi-Fi is configured by looking at wpa_supplicant.conf."""
+    """Check if Wi-Fi is configured and connected by checking active interfaces or using NetworkManager."""
     try:
-        with open("/etc/wpa_supplicant/wpa_supplicant.conf", "r") as wpa_file:
-            return "ssid" in wpa_file.read()
-    except:
-        return False
+        # Check if NetworkManager is managing the Wi-Fi connection
+        nmcli_output = subprocess.check_output(['nmcli', '-t', '-f', 'ACTIVE,DEVICE,TYPE', 'connection', 'show'], text=True)
+        if 'wifi' in nmcli_output and 'yes' in nmcli_output:
+            return True
+    except subprocess.CalledProcessError:
+        # If NetworkManager is not managing it, fallback to check the wlan0 interface status
+        try:
+            iwconfig_output = subprocess.check_output(['iwconfig'], text=True)
+            if 'wlan0' in iwconfig_output and 'ESSID' in iwconfig_output:
+                return True
+        except:
+            pass
+
+    return False
 
 # ==========================
 # Bitcoin Functions
