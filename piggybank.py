@@ -45,16 +45,18 @@ def is_wifi_configured():
     """Check if Wi-Fi is configured and connected by checking active interfaces or using NetworkManager."""
     try:
         # Check if NetworkManager is managing the Wi-Fi connection
-        nmcli_output = subprocess.check_output(['nmcli', '-t', '-f', 'ACTIVE,DEVICE,TYPE', 'connection', 'show'], text=True)
-        if 'wifi' in nmcli_output and 'yes' in nmcli_output:
-            return True
+        nmcli_output = subprocess.check_output(
+            ['nmcli', '-t', '-f', 'DEVICE,TYPE,STATE', 'device'], text=True)
+        for line in nmcli_output.splitlines():
+            if 'wifi' in line and 'connected' in line:
+                return True
     except subprocess.CalledProcessError:
         # If NetworkManager is not managing it, fallback to check the wlan0 interface status
         try:
             iwconfig_output = subprocess.check_output(['iwconfig'], text=True)
             if 'wlan0' in iwconfig_output and 'ESSID' in iwconfig_output:
                 return True
-        except:
+        except (subprocess.CalledProcessError, FileNotFoundError):
             pass
 
     return False
